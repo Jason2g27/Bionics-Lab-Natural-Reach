@@ -84,6 +84,59 @@ jupyter lab
 
 Open `notebooks/01_data_collection.ipynb` to load and inspect recorded movement data.
 
+## Recording Data
+
+**Hardware required:** Xbox One Kinect v2, Kinect Adapter for Windows, Kinect for Windows SDK 2.0, USB 3.0 port.
+
+**Recorder:** [DumpKinectSkeleton](https://github.com/sebtoun/DumpKinectSkeleton) — download the latest release, extract anywhere.
+
+### Physical setup
+
+1. Position the Kinect on a stable surface ~1.5–2 m in front of the subject, at roughly chest height.
+2. Place a physical target (tape mark, small object) at a reachable point — ~50 cm in front at shoulder height is a good start.
+3. **Measure the target's position** from the subject's shoulder with a tape measure and record it. Do not rely on the Kinect hand joint for ground-truth target coordinates.
+4. Keep both arms unoccluded and square to the sensor throughout the reach.
+
+### Recording a trial
+
+Each trial captures one bilateral reach. The subject reaches with **both arms simultaneously** to the target, holds 1–2 seconds, then returns to neutral.
+
+```
+DumpKinectSkeleton.exe --prefix="C:\Bionics Lab\Bionics-Lab-Natural-Reach\data\t1_rep1"
+```
+
+Stop recording with **Ctrl+C** after the subject returns to neutral. Run a separate command per trial:
+
+```
+DumpKinectSkeleton.exe --prefix="...\data\t1_rep2"
+DumpKinectSkeleton.exe --prefix="...\data\t1_rep3"
+```
+
+Aim for **5 trials per target location, 3–5 target locations** for a usable pilot dataset.
+
+### Naming convention
+
+```
+t{target}_{side}_rep{n}.csv
+```
+
+Example: `t1_right_rep1.csv` = target 1, right arm as driving input, rep 1. Each bilateral recording produces two dataset entries (right-as-input and left-as-input), so note the designation explicitly — don't silently mix them.
+
+### What the raw CSV looks like
+
+Long format, one row per joint per frame (25 joints × ~30 fps):
+
+```
+Timestamp, JointID, Position.X/Y/Z, Orientation.X/Y/Z/W, State
+```
+
+`State`: 2 = Tracked, 1 = Inferred, 0 = NotTracked. The loader in `notebooks/01_data_collection.ipynb` pivots this to a per-frame array and flags frames where the reaching hand is not fully tracked.
+
+### Notes
+
+- Raw CSVs are gitignored — back them up to a shared drive separately.
+- Verify the first CSV before recording more: timestamps should be monotonic, frame count ≈ duration × 30, reaching hand mostly `State=2`.
+
 ## Project Status
 
 Early-stage research. The project scaffold is in place — directory structure, module interfaces, and data-loading utilities are ready. Current work is recording the movement dataset. The governing equations and forward model (`src/model.py`) will be implemented once data collection begins.
